@@ -28,7 +28,7 @@ public class SocialMediaController {
 
     @PostMapping("/register")
     public ResponseEntity<Account> postCreateAccount(@RequestBody Account account) {
-        //if success TODO**
+        Account registeredAccount = accountService.registerAccount(account);
         if(1 == 1) return ResponseEntity.ok(account);
         //if registration unsuccessful due to duplicate username
         else if(2 == 2) return ResponseEntity.status(409).build();
@@ -38,8 +38,8 @@ public class SocialMediaController {
 
     @PostMapping("/login")
     public ResponseEntity<Account> postLogin(@RequestBody Account account) {
-        //if success TODO**
-        if(1 == 1) return ResponseEntity.ok(account);
+        Account existingAccount = accountService.loginAccount(account);
+        if(existingAccount != null) return ResponseEntity.ok(account);
         //if login unsuccessful
         else return ResponseEntity.status(401).build();
     }
@@ -60,32 +60,29 @@ public class SocialMediaController {
 
     @GetMapping("/messages/{messageId}")
     public ResponseEntity<Message> getMessageById(@PathVariable int messageId) {
-        Optional<Message> message = messageService.getMessageById(messageId); 
+        Optional<Message> message = messageService.getMessageByMessageId(messageId); 
         return ResponseEntity.of(message);
     }
 
     @DeleteMapping("/messages/{messageId}")
     public ResponseEntity<Integer> deleteMessageById(@PathVariable int messageId) {
-        //add logic for retrieving num updated rows
-        int rowsUpdated = 0;
+        int rowsDeleted = messageService.deleteMessageByMessageId(messageId);
 
-        if(rowsUpdated == 1) return ResponseEntity.ok(rowsUpdated);
+        if(rowsDeleted == 1) return ResponseEntity.ok(rowsDeleted);
         else return ResponseEntity.status(200).build();
     }
 
     @PatchMapping("/messages/{messageId}")
     public ResponseEntity<Integer> patchMessageById(@RequestBody Message message, @PathVariable int messageId) {
-        //add logic for retrieving num updated rows
-        int rowsUpdated = 0;
+        int rowsUpdated = messageService.patchMessageByMessageId(message, messageId);
         
-        if(rowsUpdated == 1) return ResponseEntity.ok(rowsUpdated);
+        if(rowsUpdated > 0) return ResponseEntity.ok(rowsUpdated);
         else return ResponseEntity.status(400).build();
     }
 
     @GetMapping("/accounts/{accountId}/messages")
     public ResponseEntity<List<Message>> getAllMessagesByAccountId(@PathVariable int accountId) {
-        List<Message> messageList = new ArrayList<>();
-        //if success TODO**
+        List<Message> messageList = messageService.getAllMessagesByAccountId(accountId);
         return ResponseEntity.ok(messageList);
     }
 
