@@ -3,12 +3,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.entity.Account;
+import com.example.exception.ClientErrorException;
+import com.example.exception.DuplicateUsernameException;
 import com.example.repository.AccountRepository;
 
 @Service
 public class AccountService {
 
-    AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
     @Autowired
     public AccountService(AccountRepository accountRepository) {
@@ -18,11 +20,9 @@ public class AccountService {
     //register new account
     public Account registerAccount(Account account){
         if(account.getUsername().length() == 0 || account.getPassword().length() < 4){
-            //400
-            return account;
+            throw new ClientErrorException("Blank username or too short password provided.");
         } else if(accountRepository.existsByUsername(account.getUsername())) {
-            //409
-            return account;
+            throw new DuplicateUsernameException("Username already exists.");
         } else return accountRepository.save(account); 
     }
 

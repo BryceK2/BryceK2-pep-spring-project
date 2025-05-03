@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.entity.Message;
+import com.example.exception.ClientErrorException;
 import com.example.repository.MessageRepository;
 
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.Optional;
 
 @Service
 public class MessageService {
-    MessageRepository messageRepository;
+    private final MessageRepository messageRepository;
 
     @Autowired
     public MessageService(MessageRepository messageRepository){
@@ -23,9 +24,9 @@ public class MessageService {
         //checks if message is not blank and is not over 255 characters long, and postedBy is real user
         if(message.getMessageText().length() > 0 && message.getMessageText().length() <= 255 && messageRepository.existsByPostedBy(message.getPostedBy())) {
             return messageRepository.save(message);
+        } else {
+            throw new ClientErrorException("Message text invalid format or invalid user.");
         }
-        //return blank TODO Exception?
-        return messageRepository.save(message);
     }
 
     //get all messages
@@ -46,12 +47,13 @@ public class MessageService {
     //patch message by messageId
     public int patchMessageByMessageId(Message message, int messageId){
         String messageText = message.getMessageText();
-        if(getMessageByMessageId(messageId) != null && messageText.length() > 0 && messageText.length() <= 255){
-            return messageRepository.patchMessageById(messageText, messageId);
-        } 
+        Optional<Message> validMessage = getMessageByMessageId(messageId);
         
-        //return 0 if patch unsuccessful
-        return 0;
+        if(validMessage != null && messageText.length() > 0 && messageText.length() <= 255){
+            return messageRepository.patchMessageById(messageText, messageId);
+        } else {
+            throw new ClientErrorException("Message text invalid format or messageId does not exist in Database.");
+        }
     }
 
     //get all messages written by Account.accountId

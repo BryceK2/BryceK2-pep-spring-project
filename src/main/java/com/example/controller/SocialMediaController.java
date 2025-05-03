@@ -4,14 +4,13 @@ import com.example.entity.Account;
 import com.example.entity.Message;
 import com.example.service.AccountService;
 import com.example.service.MessageService;
+import com.example.exception.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Optional;
 
 @RestController
@@ -29,27 +28,19 @@ public class SocialMediaController {
     @PostMapping("/register")
     public ResponseEntity<Account> postCreateAccount(@RequestBody Account account) {
         Account registeredAccount = accountService.registerAccount(account);
-        if(1 == 1) return ResponseEntity.ok(account);
-        //if registration unsuccessful due to duplicate username
-        else if(2 == 2) return ResponseEntity.status(409).build();
-        //if registration unsuccessful due to other reason
-        else return ResponseEntity.status(400).build();
+        return ResponseEntity.ok(registeredAccount);
     }
 
     @PostMapping("/login")
     public ResponseEntity<Account> postLogin(@RequestBody Account account) {
-        Account existingAccount = accountService.loginAccount(account);
-        if(existingAccount != null) return ResponseEntity.ok(account);
-        //if login unsuccessful
-        else return ResponseEntity.status(401).build();
+        Account validAccount = accountService.loginAccount(account);
+        return ResponseEntity.ok(validAccount);
     }
 
     @PostMapping("/messages")
     public ResponseEntity<Message> postNewMessage(@RequestBody Message message) {
         Message savedMessage = messageService.addMessage(message);
-        if(savedMessage != null) return ResponseEntity.ok(savedMessage);
-        //if message creation unsuccessful
-        else return ResponseEntity.status(400).build();
+        return ResponseEntity.ok(savedMessage);
     }
 
     @GetMapping("/messages")
@@ -75,15 +66,31 @@ public class SocialMediaController {
     @PatchMapping("/messages/{messageId}")
     public ResponseEntity<Integer> patchMessageById(@RequestBody Message message, @PathVariable int messageId) {
         int rowsUpdated = messageService.patchMessageByMessageId(message, messageId);
-        
-        if(rowsUpdated > 0) return ResponseEntity.ok(rowsUpdated);
-        else return ResponseEntity.status(400).build();
+        return ResponseEntity.ok(rowsUpdated);
     }
 
     @GetMapping("/accounts/{accountId}/messages")
     public ResponseEntity<List<Message>> getAllMessagesByAccountId(@PathVariable int accountId) {
         List<Message> messageList = messageService.getAllMessagesByAccountId(accountId);
         return ResponseEntity.ok(messageList);
+    }
+
+    //Exception Handler: Client error (400)
+    @ExceptionHandler(ClientErrorException.class)
+    public ResponseEntity<String> ClientErrorException(DuplicateUsernameException e){
+        return ResponseEntity.status(400).body(e.getMessage());
+    }
+
+    //Exception Handler: Unauthorized (401)
+    @ExceptionHandler(UnauthorizedUserException.class)
+    public ResponseEntity<String> UnauthorizedUserException(DuplicateUsernameException e){
+        return ResponseEntity.status(401).body(e.getMessage());
+    }
+
+    //Exception Handler: Duplicate username conflict (409)
+    @ExceptionHandler(DuplicateUsernameException.class)
+    public ResponseEntity<String> handleDuplicateUsername(DuplicateUsernameException e){
+        return ResponseEntity.status(409).body(e.getMessage());
     }
 
 }
